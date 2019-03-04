@@ -20,14 +20,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '4p*$gdeii_wp%9^bad*9hbk6(4n8z)1^b01#e&h1^)8i9cei+a'
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
-    '192.168.3.157',
 ]
 
 
@@ -81,17 +80,11 @@ WSGI_APPLICATION = 'hac.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'NAME': 'hac',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        # 'ENGINE': 'django.db.backends.mysql',
-        # 'HOST': '127.0.0.1',
-        # # 'PORT': '3306',
-        # 'NAME': 'hac',
-        # 'USER': 'root',
-        # 'PASSWORD': 'd79zDkN96C88ya4h',
+        'HOST': os.environ['DB_HOST'],
+        'PORT': os.environ['DB_PORT'],
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ['DB_USER'],
+        'PASSWORD': os.environ['DB_PASSWORD'],
     }
 }
 

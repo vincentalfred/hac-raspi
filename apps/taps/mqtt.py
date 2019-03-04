@@ -34,7 +34,7 @@ client.on_connect = on_connect
 client.on_message = on_message
 client.on_disconnect = on_disconnect
 
-mqtt_server = "192.168.3.157";
+mqtt_server = "127.0.0.1";
 mqtt_port = 1883;
 
 client.connect(mqtt_server, mqtt_port, 60)
