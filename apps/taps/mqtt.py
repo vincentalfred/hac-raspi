@@ -23,10 +23,10 @@ def on_message(client, userdata, msg):
 		if msg.topic == topic:
 			print(msg.topic+" "+str(msg.payload))
 			card_uid = msg.payload
-			machine = Machine.objects.get(pk=1)
+			src_machine = Machine.objects.get(pk=machine.id)
 			tap_time = timezone.now()
 			power_usage = 100
-			tap = Tap(card_uid = card_uid, machine = machine, tap_time = tap_time, power_usage = power_usage)
+			tap = Tap(card_uid = card_uid, machine = src_machine, tap_time = tap_time, power_usage = power_usage)
 			tap.save()
 		topic = "{}/state/power".format(machine.id)
 		if msg.topic == topic:
