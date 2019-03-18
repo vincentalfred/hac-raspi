@@ -14,3 +14,7 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hac.settings')
 
 application = get_wsgi_application()
+
+print("READY!")
+from apps.taps import mqtt
+mqtt.client.loop_start()
