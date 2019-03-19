@@ -6,6 +6,7 @@ from apps.taps.models import Tap
 from apps.machines.models import Machine
 from apps.cards.models import Card, Unregistered_card
 from apps.usages.models import Usage
+from apps.certifications.models import Certification
 
 machines = {}
 machineData = {}
@@ -52,27 +53,40 @@ def on_message(client, userdata, msg):
 				except Card.DoesNotExist:
 					print("{} is unregistered." .format(card_uid))
 					cardExist = 0;
-					new_card = Unregistered_card(machine=machine.id, card_uid=card_uid)
-					new_card.save();
+					try:
+						new_card = Unregistered_card(machine=machine, card_uid=card_uid)
+						new_card.save();
+					except Exception as e:
+						print("err when registering unregistered_card={}".format(e))
+					pubtopic = "{}/command/action".format(machine.id)
+					pubmessage = "3"
+					client.publish(pubtopic, pubmessage, qos=2)
 					
 				if cardExist:
-					print("Starting new session.");
-					src_machine = Machine.objects.get(pk=machine.id)
-					tap_time = timezone.now()
-					power_usage = 100
-					tap = Tap(card_uid = card_uid, machine = src_machine, tap_time = tap_time, power_usage = power_usage)
-					tap.save()
-					machineData[machine.id] = {
-						'ssr'		: 1,
-						'card_uid'	: str(card_uid),
-						'user_id'	: User.objects.get(carduid=str(card_uid)),
-						'usage'		: 0,
-						'start_time': timezone.now(),
-						'end_time'	: 0,
-					}
-					pubtopic = "{}/command/ssr".format(machine.id)
-					pubmessage = "1"
-					client.publish(pubtopic, pubmessage, qos=2)
+					# check if certified or not
+					print("Card Exist")
+					print("{}-{}".format(card.user, machine.machine_type))
+					if Certification.objects.filter(user=card.user, machine_type=machine.machine_type).exists():
+						print("Starting new session.");
+						# src_machine = Machine.objects.get(pk=machine.id)
+						# tap_time = timezone.now()
+						# power_usage = 100
+						# tap = Tap(card_uid = card_uid, machine = src_machine, tap_time = tap_time, power_usage = power_usage)
+						# tap.save()
+						machineData[machine.id]['ssr'] = 1
+						machineData[machine.id]['card_uid'] = card_uid
+						machineData[machine.id]['user_id'] = card.user
+						machineData[machine.id]['usage'] = 0
+						machineData[machine.id]['start_time'] = timezone.now()
+						
+						pubtopic = "{}/command/action".format(machine.id)
+						pubmessage = "1"
+						client.publish(pubtopic, pubmessage, qos=2)
+					else:
+						print("not certified!")
+						pubtopic = "{}/command/action".format(machine.id)
+						pubmessage = "2"
+						client.publish(pubtopic, pubmessage, qos=2)
 
 		topic = "{}/state/stop".format(machine.id)
 		if msg.topic == topic:
@@ -87,7 +101,7 @@ def on_message(client, userdata, msg):
 					total_usage		= machineData[machine.id]['usage'],
 				)
 				new_usage.save()
-				
+
 				# reset machineData
 				machineData[machine.id] = {
 					'ssr'		: 0,
