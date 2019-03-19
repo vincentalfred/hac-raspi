@@ -2,16 +2,15 @@ import os
 import paho.mqtt.client as mqtt
 from django.utils import timezone
 
+from apps.taps.models import Tap
+from apps.machines.models import Machine
+from apps.cards.models import Card, Unregistered_card
+from apps.usages.models import Usage
+
 machines = {}
 machineData = {}
 
 def on_connect(client, userdata, flags, rc):
-	try:
-		from apps.taps.models import Tap
-		from apps.machines.models import Machine
-	except Exception as e:
-		print("@on_connect, err: {}".format(e))
-	
 	global machines, machineData
 	
 	machineData.clear()
@@ -23,21 +22,19 @@ def on_connect(client, userdata, flags, rc):
 		client.subscribe(topic)
 		print("Subscribe to {}.".format(topic))
 		machineData[machine.id] = {
-			'ssr': 0,
-			'card_uid': '0',
-			'usage': 0,
+			'ssr'		: 0,
+			'card_uid'	: 0,
+			'user_id'	: 0,
+			'usage'		: 0,
 			'start_time': 0,
+			'end_time'	: 0,
 		}
 	
 
 def on_message(client, userdata, msg):
-	from apps.taps.models import Tap
-	from apps.machines.models import Machine
-	from apps.cards.models import Card
-
 	global machines, machineData
 
-	print("Yeay! payload = "+str(msg.payload))
+	print("New Message! Payload = "+str(msg.payload))
 	msg.payload = msg.payload.decode("utf-8")
 
 	for machine in machines:
@@ -47,36 +44,60 @@ def on_message(client, userdata, msg):
 			card_uid = str(msg.payload)
 			if card_uid == machineData[machine.id]['card_uid']:
 				# extend
-				print("extend usage of {}." .format(card_uid))
+				print("extending usage of {}." .format(card_uid))
 			else:
-				# cek kartu terdaftar atau tidak
 				cardExist = 1
 				try:
 					card = Card.objects.get(card_uid=card_uid)
 				except Card.DoesNotExist:
-					# save ke tabel unregistered card
 					print("{} is unregistered." .format(card_uid))
 					cardExist = 0;
-
+					new_card = Unregistered_card(machine=machine.id, card_uid=card_uid)
+					new_card.save();
+					
 				if cardExist:
-					# start yg baru
+					print("Starting new session.");
 					src_machine = Machine.objects.get(pk=machine.id)
 					tap_time = timezone.now()
 					power_usage = 100
 					tap = Tap(card_uid = card_uid, machine = src_machine, tap_time = tap_time, power_usage = power_usage)
 					tap.save()
 					machineData[machine.id] = {
-						'ssr': 1,
-						'card_uid': str(card_uid),
-						'usage': 0,
+						'ssr'		: 1,
+						'card_uid'	: str(card_uid),
+						'user_id'	: User.objects.get(carduid=str(card_uid)),
+						'usage'		: 0,
 						'start_time': timezone.now(),
+						'end_time'	: 0,
 					}
+					pubtopic = "{}/command/ssr".format(machine.id)
+					pubmessage = "1"
+					client.publish(pubtopic, pubmessage, qos=2)
 
 		topic = "{}/state/stop".format(machine.id)
 		if msg.topic == topic:
 			print(msg.topic+" "+str(msg.payload))
 			if machineData[machine.id]['ssr'] == 1:
-				machineData[machine.id]['ssr'] = 0
+				new_usage = Usage(
+					user			= machineData[machine.id]['user_id'],
+					machine_type	= machine.machine_type,
+					machine			= machine.id,
+					start_time		= machineData[machine.id]['start_time'],
+					end_time		= timezone.now(),
+					total_usage		= machineData[machine.id]['usage'],
+				)
+				new_usage.save()
+				
+				# reset machineData
+				machineData[machine.id] = {
+					'ssr'		: 0,
+					'card_uid'	: 0,
+					'user_id'	: 0,
+					'usage'		: 0,
+					'start_time': 0,
+					'end_time'	: 0,
+				}
+
 				pubtopic = "{}/command/ssr".format(machine.id)
 				pubmessage = "0"
 				client.publish(pubtopic, pubmessage, qos=2)
