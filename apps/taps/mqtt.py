@@ -53,11 +53,17 @@ def on_message(client, userdata, msg):
 				except Card.DoesNotExist:
 					print("{} is unregistered." .format(card_uid))
 					cardExist = 0;
-					try:
+					if Unregistered_card.objects.filter(card_uid=card_uid).exists():
+						new_card = Unregistered_card.objects.get(card_uid=card_uid)
+						new_card.machine = Machine.objects.get(id=machine.id)
+						new_card.save()
+						print("Unregistered card [{}] existed already." .format(new_card.card_uid))
+						
+					else:
 						new_card = Unregistered_card(machine=machine, card_uid=card_uid)
-						new_card.save();
-					except Exception as e:
-						print("err when registering unregistered_card={}".format(e))
+						new_card.save()
+						print("Save to unregistered card.")
+
 					pubtopic = "{}/command/action".format(machine.id)
 					pubmessage = "3"
 					client.publish(pubtopic, pubmessage, qos=2)
@@ -68,20 +74,15 @@ def on_message(client, userdata, msg):
 					print("{}-{}".format(card.user, machine.machine_type))
 					if Certification.objects.filter(user=card.user, machine_type=machine.machine_type).exists():
 						print("Starting new session.");
-						# src_machine = Machine.objects.get(pk=machine.id)
-						# tap_time = timezone.now()
-						# power_usage = 100
-						# tap = Tap(card_uid = card_uid, machine = src_machine, tap_time = tap_time, power_usage = power_usage)
-						# tap.save()
 						machineData[machine.id]['ssr'] = 1
 						machineData[machine.id]['card_uid'] = card_uid
 						machineData[machine.id]['user_id'] = card.user
 						machineData[machine.id]['usage'] = 0
 						machineData[machine.id]['start_time'] = timezone.now()
-						
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "1"
 						client.publish(pubtopic, pubmessage, qos=2)
+						print(machineData[machine.id])
 					else:
 						print("not certified!")
 						pubtopic = "{}/command/action".format(machine.id)
@@ -95,7 +96,7 @@ def on_message(client, userdata, msg):
 				new_usage = Usage(
 					user			= machineData[machine.id]['user_id'],
 					machine_type	= machine.machine_type,
-					machine			= machine.id,
+					machine			= machine,
 					start_time		= machineData[machine.id]['start_time'],
 					end_time		= timezone.now(),
 					total_usage		= machineData[machine.id]['usage'],
@@ -120,6 +121,7 @@ def on_message(client, userdata, msg):
 		if msg.topic == topic and machineData[machine.id]['ssr'] == 1:
 			print(msg.topic+" "+str(msg.payload))
 			machineData[machine.id]['usage'] = float(msg.payload);
+			print(machineData[machine.id])
 
 
 def on_disconnect(client, userdata, rc):
