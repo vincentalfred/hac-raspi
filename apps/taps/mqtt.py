@@ -93,6 +93,7 @@ def on_message(client, userdata, msg):
 		if msg.topic == topic:
 			print(msg.topic+" "+str(msg.payload))
 			if machineData[machine.id]['ssr'] == 1:
+				machineData[machine.id]['usage'] = float(msg.payload);
 				new_usage = Usage(
 					user			= machineData[machine.id]['user_id'],
 					machine_type	= machine.machine_type,
