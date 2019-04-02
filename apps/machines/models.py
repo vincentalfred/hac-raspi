@@ -9,6 +9,7 @@ class Machine_type (models.Model):
 class Machine (models.Model):
 	machine_type = models.ForeignKey(Machine_type, on_delete=models.CASCADE)
 	machine_name = models.CharField(max_length=200)
+	status = models.BooleanField(default=False)
 
 	def __str__(self):
 		return self.machine_name
