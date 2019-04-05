@@ -124,6 +124,13 @@ def on_message(client, userdata, msg):
 			machineData[machine.id]['usage'] = float(msg.payload);
 			print(machineData[machine.id])
 
+		topic = "{}/state/connect".format(machine.id)
+		if msg.topic == topic:
+			print(msg.topic+" "+str(msg.payload))
+			pubtopic = "{}/command/connect".format(machine.id)
+			pubmessage = "1"
+			client.publish(pubtopic, pubmessage, qos=2)
+
 
 def on_disconnect(client, userdata, rc):
 	client.loop_stop(force=False)
