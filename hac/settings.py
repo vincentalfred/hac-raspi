@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
-    '192.168.3.154'
+    '192.168.3.156'
 ]
 
 
@@ -82,21 +82,21 @@ WSGI_APPLICATION = 'hac.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #      'ENGINE': 'django.db.backends.mysql',
-    #      'HOST': os.environ['DB_HOST'],
-    #      # 'PORT': os.environ['DB_PORT'],
-    #      'NAME': os.environ['DB_NAME'],
-    #      'USER': os.environ['DB_USER'],
-    #      'PASSWORD': os.environ['DB_PASSWORD'],
-    #  }
      'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'mydatabase',
-    }
+          'ENGINE': 'django.db.backends.mysql',
+          'HOST': os.environ['DB_HOST'],
+          # 'PORT': os.environ['DB_PORT'],
+          'NAME': os.environ['DB_NAME'],
+          'USER': os.environ['DB_USER'],
+          'PASSWORD': os.environ['DB_PASSWORD'],
+      }
+#     'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': 'mydatabase',
+#    }
 #    'default': {
 #        'ENGINE': 'django.db.backends.mysql',
-#        'HOST': '127.0.0.1',
+#        'HOST': '192.168.3.155',
 #        'PORT': 3306,
 #        'NAME': 'hac',
 #        'USER': 'root',

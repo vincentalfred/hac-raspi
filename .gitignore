@@ -7,3 +7,4 @@ static/
 app.yaml
 cloud_sql_proxy
 credentials/
+mydatabase
