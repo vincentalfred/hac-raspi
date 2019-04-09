@@ -1,21 +1,24 @@
 import os
 import paho.mqtt.client as mqtt
 from django.utils import timezone
+from django.db.models import F
 
 from apps.taps.models import Tap
-from apps.machines.models import Machine
+from apps.machines.models import Machine, Machine_type
 from apps.cards.models import Card, Unregistered_card
-from apps.usages.models import Usage
+from apps.usages.models import Usage, DailyUsage
 from apps.certifications.models import Certification
 
 machines = {}
+machine_types = {}
 machineData = {}
 
 def on_connect(client, userdata, flags, rc):
-	global machines, machineData
+	global machines, machine_types, machineData
 	
 	machineData.clear()
 	machines = Machine.objects.all()
+	machine_types = Machine_type.objects.all()
 	print("@on_connect. Connected!")
 	
 	for machine in machines:
@@ -33,7 +36,7 @@ def on_connect(client, userdata, flags, rc):
 	
 
 def on_message(client, userdata, msg):
-	global machines, machineData
+	global machines, machine_types, machineData
 
 	print("New Message! Payload = "+str(msg.payload))
 	msg.payload = msg.payload.decode("utf-8")
@@ -94,15 +97,42 @@ def on_message(client, userdata, msg):
 			print(msg.topic+" "+str(msg.payload))
 			if machineData[machine.id]['ssr'] == 1:
 				machineData[machine.id]['usage'] = float(msg.payload);
+				endTime = timezone.now();
+
 				new_usage = Usage(
 					user			= machineData[machine.id]['user_id'],
 					machine_type	= machine.machine_type,
 					machine			= machine,
 					start_time		= machineData[machine.id]['start_time'],
-					end_time		= timezone.now(),
+					end_time		= endTime,
 					total_usage		= machineData[machine.id]['usage'],
 				)
 				new_usage.save()
+
+				pubtopic = "{}/command/ssr".format(machine.id)
+				pubmessage = "0"
+				client.publish(pubtopic, pubmessage, qos=2)
+
+				if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date).exists():
+					obj = DailyUsage.objects.get(date=machineData[machine.id]['start_time'].date, machine_type=machine.machine_type)
+					obj.update(
+						total_time = F('total_time') + endTime - machineData[machine.id]['start_time'],
+						total_usage = F('total_usage') + machineData[machine.id]['usage'],
+					)
+					# obj.total_time = F('total_time') + endTime - machineData[machine.id]['start_time']
+					# obj.total_usage = F('total_usage') + machineData[machine.id]['usage']
+					# obj.save()
+				else:
+					for machine_type in machine_types:
+						obj = DailyUsage.objects.create(
+							date=machineData[machine.id]['start_time'].date,
+							machine_type=machine_type,
+						)
+					obj = DailyUsage.objects.get(date=machineData[machine.id]['start_time'].date, machine_type=machine.machine_type)
+					obj.update(
+						total_time = F('total_time') + endTime - machineData[machine.id]['start_time'],
+						total_usage = F('total_usage') + machineData[machine.id]['usage'],
+					)
 
 				# reset machineData
 				machineData[machine.id] = {
@@ -113,10 +143,6 @@ def on_message(client, userdata, msg):
 					'start_time': 0,
 					'end_time'	: 0,
 				}
-
-				pubtopic = "{}/command/ssr".format(machine.id)
-				pubmessage = "0"
-				client.publish(pubtopic, pubmessage, qos=2)
 
 		topic = "{}/state/usage".format(machine.id)
 		if msg.topic == topic and machineData[machine.id]['ssr'] == 1:

@@ -26,53 +26,53 @@ SECRET_KEY = os.environ['SECRET_KEY']
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '127.0.0.1',
-    '192.168.3.156'
+	'127.0.0.1',
+	'192.168.3.156'
 ]
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'apps.taps',
-    'apps.machines',
-    'apps.cards',
-    'apps.usages',
-    'apps.certifications',
+	'django.contrib.admin',
+	'django.contrib.auth',
+	'django.contrib.contenttypes',
+	'django.contrib.sessions',
+	'django.contrib.messages',
+	'django.contrib.staticfiles',
+	'apps.taps',
+	'apps.machines',
+	'apps.cards',
+	'apps.usages',
+	'apps.certifications',
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+	'django.middleware.security.SecurityMiddleware',
+	'django.contrib.sessions.middleware.SessionMiddleware',
+	'django.middleware.common.CommonMiddleware',
+	'django.middleware.csrf.CsrfViewMiddleware',
+	'django.contrib.auth.middleware.AuthenticationMiddleware',
+	'django.contrib.messages.middleware.MessageMiddleware',
+	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'hac.urls'
 
 TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
+	{
+		'BACKEND': 'django.template.backends.django.DjangoTemplates',
+		'DIRS': [],
+		'APP_DIRS': True,
+		'OPTIONS': {
+			'context_processors': [
+				'django.template.context_processors.debug',
+				'django.template.context_processors.request',
+				'django.contrib.auth.context_processors.auth',
+				'django.contrib.messages.context_processors.messages',
+			],
+		},
+	},
 ]
 
 WSGI_APPLICATION = 'hac.wsgi.application'
@@ -82,26 +82,26 @@ WSGI_APPLICATION = 'hac.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
 DATABASES = {
-     'default': {
-          'ENGINE': 'django.db.backends.mysql',
-          'HOST': os.environ['DB_HOST'],
-          # 'PORT': os.environ['DB_PORT'],
-          'NAME': os.environ['DB_NAME'],
-          'USER': os.environ['DB_USER'],
-          'PASSWORD': os.environ['DB_PASSWORD'],
-      }
+	# 'default': {
+	# 	'ENGINE': 'django.db.backends.mysql',
+	# 	'HOST': os.environ['DB_HOST'],
+	# 	# 'PORT': os.environ['DB_PORT'],
+	# 	'NAME': os.environ['DB_NAME'],
+	# 	'USER': os.environ['DB_USER'],
+	# 	'PASSWORD': os.environ['DB_PASSWORD'],
+	#   }
 #     'default': {
 #        'ENGINE': 'django.db.backends.sqlite3',
 #        'NAME': 'mydatabase',
 #    }
-#    'default': {
-#        'ENGINE': 'django.db.backends.mysql',
-#        'HOST': '192.168.3.155',
-#        'PORT': 3306,
-#        'NAME': 'hac',
-#        'USER': 'root',
-#        'PASSWORD': 'root',
-#    }
+   'default': {
+       'ENGINE': 'django.db.backends.mysql',
+       'HOST': '127.0.0.1',
+       'PORT': 3306,
+       'NAME': 'hac',
+       'USER': 'root',
+       'PASSWORD': 'root',
+   }
 }
 
 
@@ -109,18 +109,18 @@ DATABASES = {
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+	{
+		'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+	},
+	{
+		'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+	},
+	{
+		'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+	},
+	{
+		'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+	},
 ]
 
 
