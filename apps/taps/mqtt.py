@@ -117,7 +117,7 @@ def on_message(client, userdata, msg):
 					try:
 						obj = DailyUsage.objects.get(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 						obj.update(
-							total_time = F('total_time') + endTime - machineData[machine.id]['start_time'],
+							total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']),
 							total_usage = F('total_usage') + machineData[machine.id]['usage'],
 						)
 					except Exception as e:
