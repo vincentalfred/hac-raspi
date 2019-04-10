@@ -115,9 +115,9 @@ def on_message(client, userdata, msg):
 
 				if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
 					try:
-						obj = DailyUsage.objects.get(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
+						obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 						obj.update(
-							total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']),
+							total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']).total_seconds(),
 							total_usage = F('total_usage') + machineData[machine.id]['usage'],
 						)
 					except Exception as e:
@@ -136,9 +136,9 @@ def on_message(client, userdata, msg):
 					except Exception as e:
 						print("Error Creating: {}" .format(e))
 					try:
-						obj = DailyUsage.objects.get(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
+						obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 						obj.update(
-							total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']),
+							total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']).total_seconds(),
 							total_usage = F('total_usage') + machineData[machine.id]['usage'],
 						)
 					except Exception as e:

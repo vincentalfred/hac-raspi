@@ -15,5 +15,5 @@ class Usage (models.Model):
 class DailyUsage (models.Model):
 	date = models.DateField(db_index=True)
 	machine_type = models.ForeignKey(Machine_type, on_delete=models.CASCADE)
-	total_usage = models.IntegerField(default = 0)
-	total_time = models.DurationField(default = timedelta())
+	total_usage = models.IntegerField(default=0)
+	total_time = models.BigIntegerField(default=0)
