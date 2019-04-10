@@ -128,21 +128,21 @@ def on_message(client, userdata, msg):
 				else:
 					print("DailyUsage Not Exist. Creating {} DailyUsage." .format(machineData[machine.id]['start_time'].date()))
 					try:
-					for machine_type in machine_types:
-						obj = DailyUsage.objects.create(
-							date=machineData[machine.id]['start_time'].date(),
-							machine_type=machine_type,
+						for machine_type in machine_types:
+							obj = DailyUsage.objects.create(
+								date=machineData[machine.id]['start_time'].date(),
+								machine_type=machine_type,
+							)
+					except Exception as e:
+						print("Error Creating: {}" .format(e))
+					try:
+						obj = DailyUsage.objects.get(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
+						obj.update(
+							total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']),
+							total_usage = F('total_usage') + machineData[machine.id]['usage'],
 						)
 					except Exception as e:
-						print("Error: {}" .format(e))
-					try:
-					obj = DailyUsage.objects.get(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
-					obj.update(
-						total_time = F('total_time') + endTime - machineData[machine.id]['start_time'],
-						total_usage = F('total_usage') + machineData[machine.id]['usage'],
-					)
-					except Exception as e:
-						print("Error: {}" .format(e))
+						print("Error Updating: {}" .format(e))
 
 				# reset machineData
 				machineData[machine.id] = {
