@@ -23,7 +23,7 @@ def on_connect(client, userdata, flags, rc):
 	
 	for machine in machines:
 		topic = "{}/state/#".format(machine.id)
-		client.subscribe(topic)
+		client.subscribe(topic, 2)
 		print("Subscribe to {}.".format(topic))
 		machineData[machine.id] = {
 			'ssr'		: 0,
