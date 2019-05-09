@@ -69,7 +69,7 @@ def on_message(client, userdata, msg):
 
 					pubtopic = "{}/command/action".format(machine.id)
 					pubmessage = "3"
-					client.publish(pubtopic, pubmessage, qos=2)
+					client.publish(pubtopic, pubmessage, qos=2, retain=True)
 					
 				if cardExist:
 					# check if certified or not
@@ -84,13 +84,13 @@ def on_message(client, userdata, msg):
 						machineData[machine.id]['start_time'] = timezone.now()
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "1"
-						client.publish(pubtopic, pubmessage, qos=2)
+						client.publish(pubtopic, pubmessage, qos=2, retain=True)
 						print(machineData[machine.id])
 					else:
 						print("not certified!")
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "2"
-						client.publish(pubtopic, pubmessage, qos=2)
+						client.publish(pubtopic, pubmessage, qos=2, retain=True)
 
 		topic = "{}/state/stop".format(machine.id)
 		if msg.topic == topic:
@@ -111,7 +111,7 @@ def on_message(client, userdata, msg):
 
 				pubtopic = "{}/command/ssr".format(machine.id)
 				pubmessage = "0"
-				client.publish(pubtopic, pubmessage, qos=2)
+				client.publish(pubtopic, pubmessage, qos=2, retain=True)
 
 				if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
 					try:
@@ -165,7 +165,7 @@ def on_message(client, userdata, msg):
 			print(msg.topic+" "+str(msg.payload))
 			pubtopic = "{}/command/connect".format(machine.id)
 			pubmessage = "1"
-			client.publish(pubtopic, pubmessage, qos=2)
+			client.publish(pubtopic, pubmessage, qos=2, retain=True)
 
 
 def on_disconnect(client, userdata, rc):
@@ -177,7 +177,7 @@ def on_disconnect(client, userdata, rc):
 	machineData.clear();
 
 
-client = mqtt.Client(client_id="raspi", clean_session=True, userdata=None, transport="tcp")
+client = mqtt.Client(client_id="raspi", clean_session=False, userdata=None, transport="tcp")
 client.on_connect = on_connect
 client.on_message = on_message
 client.on_disconnect = on_disconnect
@@ -186,13 +186,3 @@ mqtt_server = "127.0.0.1";
 mqtt_port = 1883;
 
 client.connect(mqtt_server, mqtt_port, 60)
-
-
-
-
-# cur_time = timezone.now()
-# pubtopic = "{}/command/timeleft" .format(machine.id)
-# # todo: cari cara utk kurangin waktu/cari selisih
-# timeleft = 30 - (cur_time - machineData[machine.id]['start_time'])
-# client.publish(pubtopic, timeleft)
-
