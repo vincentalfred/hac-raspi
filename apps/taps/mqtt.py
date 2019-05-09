@@ -165,7 +165,7 @@ def on_message(client, userdata, msg):
 			print(msg.topic+" "+str(msg.payload))
 			pubtopic = "{}/command/connect".format(machine.id)
 			pubmessage = "1"
-			client.publish(pubtopic, pubmessage, qos=2, retain=True)
+			client.publish(pubtopic, pubmessage, qos=2, retain=False)
 
 
 def on_disconnect(client, userdata, rc):
