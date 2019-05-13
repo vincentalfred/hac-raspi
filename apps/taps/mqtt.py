@@ -9,6 +9,10 @@ from apps.cards.models import Card, Unregistered_card
 from apps.usages.models import Usage, DailyUsage
 from apps.certifications.models import Certification
 
+mqtt_server = "127.0.0.1";
+mqtt_port = 1883;
+mqtt_retain = False;
+
 machines = {}
 machine_types = {}
 machineData = {}
@@ -69,7 +73,7 @@ def on_message(client, userdata, msg):
 
 					pubtopic = "{}/command/action".format(machine.id)
 					pubmessage = "3"
-					client.publish(pubtopic, pubmessage, qos=2, retain=True)
+					client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
 					
 				if cardExist:
 					# check if certified or not
@@ -84,13 +88,13 @@ def on_message(client, userdata, msg):
 						machineData[machine.id]['start_time'] = timezone.now()
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "1"
-						client.publish(pubtopic, pubmessage, qos=2, retain=True)
+						client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
 						print(machineData[machine.id])
 					else:
 						print("not certified!")
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "2"
-						client.publish(pubtopic, pubmessage, qos=2, retain=True)
+						client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
 
 		topic = "{}/state/stop".format(machine.id)
 		if msg.topic == topic:
@@ -111,7 +115,7 @@ def on_message(client, userdata, msg):
 
 				pubtopic = "{}/command/ssr".format(machine.id)
 				pubmessage = "0"
-				client.publish(pubtopic, pubmessage, qos=2, retain=True)
+				client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
 
 				if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
 					try:
@@ -165,7 +169,7 @@ def on_message(client, userdata, msg):
 			print(msg.topic+" "+str(msg.payload))
 			pubtopic = "{}/command/connect".format(machine.id)
 			pubmessage = "1"
-			client.publish(pubtopic, pubmessage, qos=2, retain=False)
+			client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
 
 
 def on_disconnect(client, userdata, rc):
@@ -181,8 +185,5 @@ client = mqtt.Client(client_id="raspi", clean_session=False, userdata=None, tran
 client.on_connect = on_connect
 client.on_message = on_message
 client.on_disconnect = on_disconnect
-
-mqtt_server = "127.0.0.1";
-mqtt_port = 1883;
 
 client.connect(mqtt_server, mqtt_port, 60)
