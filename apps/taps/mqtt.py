@@ -9,9 +9,13 @@ from apps.cards.models import Card, Unregistered_card
 from apps.usages.models import Usage, DailyUsage
 from apps.certifications.models import Certification
 
-mqtt_server = "127.0.0.1";
-mqtt_port = 1883;
-mqtt_retain = False;
+mqtt_server = "127.0.0.1"
+mqtt_port = 1883
+
+mqtt_qos = 1
+mqtt_retain = False
+mqtt_keepAlive = 60
+mqtt_cleanSession = True
 
 machines = {}
 machine_types = {}
@@ -73,7 +77,7 @@ def on_message(client, userdata, msg):
 
 					pubtopic = "{}/command/action".format(machine.id)
 					pubmessage = "3"
-					client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
+					client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 					
 				if cardExist:
 					# check if certified or not
@@ -88,13 +92,13 @@ def on_message(client, userdata, msg):
 						machineData[machine.id]['start_time'] = timezone.now()
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "1"
-						client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
+						client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 						print(machineData[machine.id])
 					else:
 						print("not certified!")
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "2"
-						client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
+						client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 
 		topic = "{}/state/stop".format(machine.id)
 		if msg.topic == topic:
@@ -115,7 +119,7 @@ def on_message(client, userdata, msg):
 
 				pubtopic = "{}/command/ssr".format(machine.id)
 				pubmessage = "0"
-				client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
+				client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 
 				if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
 					try:
@@ -169,7 +173,8 @@ def on_message(client, userdata, msg):
 			print(msg.topic+" "+str(msg.payload))
 			pubtopic = "{}/command/connect".format(machine.id)
 			pubmessage = "1"
-			client.publish(pubtopic, pubmessage, qos=2, retain=mqtt_retain)
+			for x in range(0, 5):
+				client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 
 
 def on_disconnect(client, userdata, rc):
@@ -181,9 +186,9 @@ def on_disconnect(client, userdata, rc):
 	machineData.clear();
 
 
-client = mqtt.Client(client_id="raspi", clean_session=False, userdata=None, transport="tcp")
+client = mqtt.Client(client_id="raspi", clean_session=mqtt_cleanSession, userdata=None, transport="tcp")
 client.on_connect = on_connect
 client.on_message = on_message
 client.on_disconnect = on_disconnect
 
-client.connect(mqtt_server, mqtt_port, 60)
+client.connect(mqtt_server, mqtt_port, mqtt_keepAlive)
