@@ -12,7 +12,7 @@ from apps.certifications.models import Certification
 mqtt_server = "127.0.0.1"
 mqtt_port = 1883
 
-mqtt_qos = 1
+mqtt_qos = 0
 mqtt_retain = False
 mqtt_keepAlive = 60
 mqtt_cleanSession = True 
