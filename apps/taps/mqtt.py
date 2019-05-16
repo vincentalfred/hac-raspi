@@ -15,7 +15,7 @@ mqtt_port = 1883
 mqtt_qos = 1
 mqtt_retain = False
 mqtt_keepAlive = 60
-mqtt_cleanSession = False
+mqtt_cleanSession = True 
 
 machines = {}
 machine_types = {}
