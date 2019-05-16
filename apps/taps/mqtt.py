@@ -173,7 +173,7 @@ def on_message(client, userdata, msg):
 			print(msg.topic+" "+str(msg.payload))
 			pubtopic = "{}/command/connect".format(machine.id)
 			pubmessage = "1"
-			for x in range(0, 5):
+			for x in range(0, 1):
 				client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 
 
