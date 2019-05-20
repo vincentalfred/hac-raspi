@@ -160,7 +160,7 @@ def on_message(client, userdata, msg):
 					'usage'		: 0,
 					'start_time': 0,
 					'end_time'	: 0,
-					'connect_id': machineData[machine.id][connect_id],
+					'connect_id': machineData[machine.id]['connect_id'],
 				}
 
 		topic = "{}/state/usage".format(machine.id)
