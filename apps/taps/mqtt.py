@@ -40,8 +40,8 @@ def on_connect(client, userdata, flags, rc):
 			'usage'		: 0,
 			'start_time': 0,
 			'end_time'	: 0,
+			'connect_id': 0,
 		}
-	
 
 def on_message(client, userdata, msg):
 	global machines, machine_types, machineData
@@ -63,7 +63,7 @@ def on_message(client, userdata, msg):
 					card = Card.objects.get(card_uid=card_uid)
 				except Card.DoesNotExist:
 					print("{} is unregistered." .format(card_uid))
-					cardExist = 0;
+					cardExist = 0
 					if Unregistered_card.objects.filter(card_uid=card_uid).exists():
 						new_card = Unregistered_card.objects.get(card_uid=card_uid)
 						new_card.machine = Machine.objects.get(id=machine.id)
@@ -84,7 +84,7 @@ def on_message(client, userdata, msg):
 					print("Card Exist")
 					print("{}-{}".format(card.user, machine.machine_type))
 					if Certification.objects.filter(user=card.user, machine_type=machine.machine_type).exists():
-						print("Starting new session.");
+						print("Starting new session.")
 						machineData[machine.id]['ssr'] = 1
 						machineData[machine.id]['card_uid'] = card_uid
 						machineData[machine.id]['user_id'] = card.user
@@ -104,8 +104,8 @@ def on_message(client, userdata, msg):
 		if msg.topic == topic:
 			print(msg.topic+" "+str(msg.payload))
 			if machineData[machine.id]['ssr'] == 1:
-				machineData[machine.id]['usage'] = float(msg.payload);
-				endTime = timezone.now();
+				machineData[machine.id]['usage'] = float(msg.payload)
+				endTime = timezone.now()
 
 				new_usage = Usage(
 					user			= machineData[machine.id]['user_id'],
@@ -165,17 +165,21 @@ def on_message(client, userdata, msg):
 		topic = "{}/state/usage".format(machine.id)
 		if msg.topic == topic and machineData[machine.id]['ssr'] == 1:
 			print(msg.topic+" "+str(msg.payload))
-			machineData[machine.id]['usage'] = float(msg.payload);
+			machineData[machine.id]['usage'] = float(msg.payload)
+			machineData[machine.id]['end_time'] = timezone.now()
 			print(machineData[machine.id])
 
 		topic = "{}/state/connect".format(machine.id)
 		if msg.topic == topic:
 			print(msg.topic+" "+str(msg.payload))
-			pubtopic = "{}/command/connect".format(machine.id)
-			pubmessage = "1"
-			for x in range(0, 1):
-				client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
-
+			# only publish message when receiving new connect id
+			if int(msg.payload) > machineData[machine.id]['connect_id']:
+				machineData[machine.id]['end_time'] = timezone.now()
+				machineData[machine.id]['connect_id'] = int(msg.payload)
+				pubtopic = "{}/command/connect".format(machine.id)
+				pubmessage = "1"
+				for x in range(0, 1):
+					client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 
 def on_disconnect(client, userdata, rc):
 	client.loop_stop(force=False)
@@ -183,7 +187,7 @@ def on_disconnect(client, userdata, rc):
 		print("Unexpected disconnection. rc={}".format(rc))
 	else:
 		print("Disconnected")
-	machineData.clear();
+	machineData.clear()
 
 
 client = mqtt.Client(client_id="raspi", clean_session=mqtt_cleanSession, userdata=None, transport="tcp")
