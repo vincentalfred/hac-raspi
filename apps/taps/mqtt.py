@@ -85,11 +85,11 @@ def on_message(client, userdata, msg):
 					print("{}-{}".format(card.user, machine.machine_type))
 					if Certification.objects.filter(user=card.user, machine_type=machine.machine_type).exists():
 						print("Starting new session.")
-						machineData[machine.id]['ssr'] = 1
-						machineData[machine.id]['card_uid'] = card_uid
-						machineData[machine.id]['user_id'] = card.user
-						machineData[machine.id]['usage'] = 0
-						machineData[machine.id]['start_time'] = timezone.now()
+						machineData[machine.id]['ssr'] 			= 1
+						machineData[machine.id]['card_uid'] 	= card_uid
+						machineData[machine.id]['user_id'] 		= card.user
+						machineData[machine.id]['usage'] 		= 0
+						machineData[machine.id]['start_time'] 	= timezone.now()
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "1"
 						client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
@@ -160,6 +160,7 @@ def on_message(client, userdata, msg):
 					'usage'		: 0,
 					'start_time': 0,
 					'end_time'	: 0,
+					'connect_id': machineData[machine.id][connect_id],
 				}
 
 		topic = "{}/state/usage".format(machine.id)
@@ -180,6 +181,11 @@ def on_message(client, userdata, msg):
 				pubmessage = "1"
 				for x in range(0, 1):
 					client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
+
+		topic = "{}/state/resetconnect".format(machine.id)
+		if msg.topic == topic:
+			print(msg.topic+" "+str(msg.payload))
+			machineData[machine.id]['connect_id'] = 0
 
 def on_disconnect(client, userdata, rc):
 	client.loop_stop(force=False)
