@@ -1,5 +1,6 @@
 import os
 import paho.mqtt.client as mqtt
+import datetime
 from django.utils import timezone
 from django.db.models import F
 
@@ -20,6 +21,56 @@ mqtt_cleanSession = True
 machines = {}
 machine_types = {}
 machineData = {}
+
+def resetData(machine_id):
+	machineData[machine.id] = {
+		'ssr'		: 0,
+		'card_uid'	: 0,
+		'user_id'	: 0,
+		'usage'		: 0,
+		'start_time': 0,
+		'end_time'	: 0,
+		'connect_id': machineData[machine.id]['connect_id'],
+	}
+
+def saveData(machine_id, endTime):
+	new_usage = Usage(
+		user			= machineData[machine.id]['user_id'],
+		machine_type	= machine.machine_type,
+		machine			= machine,
+		start_time		= machineData[machine.id]['start_time'],
+		end_time		= endTime,
+		total_usage		= machineData[machine.id]['usage'],
+	)
+	new_usage.save()
+
+	if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
+		try:
+			obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
+			obj.update(
+				total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']).total_seconds(),
+				total_usage = F('total_usage') + machineData[machine.id]['usage'],
+			)
+		except Exception as e:
+			print("Error: {}" .format(e))
+	else:
+		print("DailyUsage Not Exist. Creating {} DailyUsage." .format(machineData[machine.id]['start_time'].date()))
+		try:
+			for machine_type in machine_types:
+				obj = DailyUsage.objects.create(
+					date=machineData[machine.id]['start_time'].date(),
+					machine_type=machine_type,
+				)
+		except Exception as e:
+			print("Error Creating: {}" .format(e))
+		try:
+			obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
+			obj.update(
+				total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']).total_seconds(),
+				total_usage = F('total_usage') + machineData[machine.id]['usage'],
+			)
+		except Exception as e:
+			print("Error Updating: {}" .format(e))
 
 def on_connect(client, userdata, flags, rc):
 	global machines, machine_types, machineData
@@ -54,6 +105,24 @@ def on_message(client, userdata, msg):
 		if msg.topic == topic:
 			print(msg.topic+" "+str(msg.payload))
 			card_uid = str(msg.payload)
+
+			# if previous data is not saved
+			if machineData[machine.id]['card_uid'] != 0:
+				now = timezone.now()
+				elapse = (now - machineData[machine.id]['start_time']).total_seconds()
+				if machineData[machine.id]['card_uid'] != card_uid:
+					if elapse > 600:
+						endTime = now + datetime.timedelta(minutes=10)
+						saveData(machine.id, endTime)
+					else:
+						saveData(machine.id, now)
+					resetData(machine.id)
+				elif machineData[machine.id]['card_uid'] == card_uid:
+					if elapse > 600:
+						endTime = now + datetime.timedelta(minutes=10)
+						saveData(machine.id, endTime)
+						resetData(machine.id)
+
 			if card_uid == machineData[machine.id]['card_uid']:
 				# extend
 				print("extending usage of {}." .format(card_uid))
@@ -130,9 +199,6 @@ def on_message(client, userdata, msg):
 						)
 					except Exception as e:
 						print("Error: {}" .format(e))
-					# obj.total_time = F('total_time') + endTime - machineData[machine.id]['start_time']
-					# obj.total_usage = F('total_usage') + machineData[machine.id]['usage']
-					# obj.save()
 				else:
 					print("DailyUsage Not Exist. Creating {} DailyUsage." .format(machineData[machine.id]['start_time'].date()))
 					try:
@@ -185,7 +251,16 @@ def on_message(client, userdata, msg):
 		topic = "{}/state/resetconnect".format(machine.id)
 		if msg.topic == topic:
 			print(msg.topic+" "+str(msg.payload))
-			machineData[machine.id]['connect_id'] = 0
+			# machineData[machine.id]['connect_id'] = 0
+			machineData[machine.id] = {
+				'ssr'		: 0,
+				'card_uid'	: 0,
+				'user_id'	: 0,
+				'usage'		: 0,
+				'start_time': 0,
+				'end_time'	: 0,
+				'connect_id': 0,
+			}
 
 def on_disconnect(client, userdata, rc):
 	client.loop_stop(force=False)
