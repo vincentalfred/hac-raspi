@@ -45,7 +45,7 @@ def saveData(machine, endTime):
 	new_usage.save()
 
 	if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
-		if DailyUsage.objects.filter(machine_type=machine.machine_type).exists():
+		if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type).exists():
 			try:
 				obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 				obj.update(
@@ -204,7 +204,7 @@ def on_message(client, userdata, msg):
 				client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 
 				if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
-					if DailyUsage.objects.filter(machine_type=machine.machine_type).exists():
+					if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type).exists():
 						try:
 							obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 							obj.update(
