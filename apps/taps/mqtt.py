@@ -48,7 +48,7 @@ def saveData(machine_id, endTime):
 		try:
 			obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 			obj.update(
-				total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']).total_seconds(),
+				total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
 				total_usage = F('total_usage') + machineData[machine.id]['usage'],
 			)
 		except Exception as e:
@@ -66,7 +66,7 @@ def saveData(machine_id, endTime):
 		try:
 			obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 			obj.update(
-				total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']).total_seconds(),
+				total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
 				total_usage = F('total_usage') + machineData[machine.id]['usage'],
 			)
 		except Exception as e:
@@ -194,7 +194,7 @@ def on_message(client, userdata, msg):
 					try:
 						obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 						obj.update(
-							total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']).total_seconds(),
+							total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
 							total_usage = F('total_usage') + machineData[machine.id]['usage'],
 						)
 					except Exception as e:
@@ -212,7 +212,7 @@ def on_message(client, userdata, msg):
 					try:
 						obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 						obj.update(
-							total_time = F('total_time') + (endTime - machineData[machine.id]['start_time']).total_seconds(),
+							total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
 							total_usage = F('total_usage') + machineData[machine.id]['usage'],
 						)
 					except Exception as e:
