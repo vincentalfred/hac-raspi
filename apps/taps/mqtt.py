@@ -60,6 +60,7 @@ def saveData(machine, endTime):
 						date=machineData[machine.id]['start_time'].date(),
 						machine_type=machine.machine_type,
 					)
+				obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 				obj.update(
 						total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
 						total_usage = F('total_usage') + machineData[machine.id]['usage'],
@@ -212,19 +213,20 @@ def on_message(client, userdata, msg):
 								total_usage = F('total_usage') + machineData[machine.id]['usage'],
 							)
 						except Exception as e:
-							print("Error: {}" .format(e))
+							print("Error Update Existing: {}" .format(e))
 					else:
 						try:
 							obj = DailyUsage.objects.create(
 									date=machineData[machine.id]['start_time'].date(),
 									machine_type=machine.machine_type,
 								)
+							obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
 							obj.update(
 									total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
 									total_usage = F('total_usage') + machineData[machine.id]['usage'],
 								)
 						except Exception as e:
-							print("Error: {}" .format(e))
+							print("Error Create New: {}" .format(e))
 				else:
 					print("DailyUsage Not Exist. Creating {} DailyUsage." .format(machineData[machine.id]['start_time'].date()))
 					try:
