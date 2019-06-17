@@ -22,7 +22,7 @@ machines = {}
 machine_types = {}
 machineData = {}
 
-def resetData(machine_id):
+def resetData(machine):
 	machineData[machine.id] = {
 		'ssr'		: 0,
 		'card_uid'	: 0,
@@ -33,7 +33,7 @@ def resetData(machine_id):
 		'connect_id': machineData[machine.id]['connect_id'],
 	}
 
-def saveData(machine_id, endTime):
+def saveData(machine, endTime):
 	new_usage = Usage(
 		user			= machineData[machine.id]['user_id'],
 		machine_type	= machine.machine_type,
@@ -45,14 +45,27 @@ def saveData(machine_id, endTime):
 	new_usage.save()
 
 	if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
-		try:
-			obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
-			obj.update(
-				total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
-				total_usage = F('total_usage') + machineData[machine.id]['usage'],
-			)
-		except Exception as e:
-			print("Error: {}" .format(e))
+		if DailyUsage.objects.filter(machine_type=machine.machine_type).exists():
+			try:
+				obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
+				obj.update(
+					total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
+					total_usage = F('total_usage') + machineData[machine.id]['usage'],
+				)
+			except Exception as e:
+				print("Error: {}" .format(e))
+		else:
+			try:
+				obj = DailyUsage.objects.create(
+						date=machineData[machine.id]['start_time'].date(),
+						machine_type=machine.machine_type,
+					)
+				obj.update(
+						total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
+						total_usage = F('total_usage') + machineData[machine.id]['usage'],
+					)
+			except Exception as e:
+				print("Error: {}" .format(e))
 	else:
 		print("DailyUsage Not Exist. Creating {} DailyUsage." .format(machineData[machine.id]['start_time'].date()))
 		try:
@@ -113,15 +126,15 @@ def on_message(client, userdata, msg):
 				if machineData[machine.id]['card_uid'] != card_uid:
 					if elapse > 600:
 						endTime = now + datetime.timedelta(minutes=10)
-						saveData(machine.id, endTime)
+						saveData(machine, endTime)
 					else:
-						saveData(machine.id, now)
-					resetData(machine.id)
+						saveData(machine, now)
+					resetData(machine)
 				elif machineData[machine.id]['card_uid'] == card_uid:
 					if elapse > 600:
 						endTime = now + datetime.timedelta(minutes=10)
-						saveData(machine.id, endTime)
-						resetData(machine.id)
+						saveData(machine, endTime)
+						resetData(machine)
 
 			if card_uid == machineData[machine.id]['card_uid']:
 				# extend
@@ -191,14 +204,27 @@ def on_message(client, userdata, msg):
 				client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 
 				if DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date()).exists():
-					try:
-						obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
-						obj.update(
-							total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
-							total_usage = F('total_usage') + machineData[machine.id]['usage'],
-						)
-					except Exception as e:
-						print("Error: {}" .format(e))
+					if DailyUsage.objects.filter(machine_type=machine.machine_type).exists():
+						try:
+							obj = DailyUsage.objects.filter(date=machineData[machine.id]['start_time'].date(), machine_type=machine.machine_type)
+							obj.update(
+								total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
+								total_usage = F('total_usage') + machineData[machine.id]['usage'],
+							)
+						except Exception as e:
+							print("Error: {}" .format(e))
+					else:
+						try:
+							obj = DailyUsage.objects.create(
+									date=machineData[machine.id]['start_time'].date(),
+									machine_type=machine.machine_type,
+								)
+							obj.update(
+									total_time = F('total_time') + ((endTime - machineData[machine.id]['start_time']).total_seconds()/60),
+									total_usage = F('total_usage') + machineData[machine.id]['usage'],
+								)
+						except Exception as e:
+							print("Error: {}" .format(e))
 				else:
 					print("DailyUsage Not Exist. Creating {} DailyUsage." .format(machineData[machine.id]['start_time'].date()))
 					try:
