@@ -115,6 +115,50 @@ def on_message(client, userdata, msg):
 	msg.payload = msg.payload.decode("utf-8")
 
 	for machine in machines:
+		# testing
+		topic = "{}/state/carduid".format(machine.id)
+		if msg.topic == topic:
+			print(msg.topic+" "+str(msg.payload))
+			card_uid = str(msg.payload)
+
+			cardExist = 1
+			try:
+				card = Card.objects.get(card_uid=card_uid)
+			except Card.DoesNotExist:
+				# print("{} is unregistered." .format(card_uid))
+				cardExist = 0
+				if Unregistered_card.objects.filter(card_uid=card_uid).exists():
+					new_card = Unregistered_card.objects.get(card_uid=card_uid)
+					new_card.machine = Machine.objects.get(id=machine.id)
+					new_card.save()
+					print("Unregistered card [{}] existed already." .format(new_card.card_uid))
+				else:
+					new_card = Unregistered_card(machine=machine, card_uid=card_uid)
+					new_card.save()
+					print("Save to unregistered card.")
+
+				pubtopic = "{}/command/action".format(machine.id)
+				pubmessage = "3"
+				client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
+				break
+				
+			if cardExist:
+				# check if certified or not
+				print("Card Exist")
+				print("{}-{}".format(card.user, machine.machine_type))
+				if Certification.objects.filter(user=card.user, machine_type=machine.machine_type).exists():
+					pubtopic = "{}/command/action".format(machine.id)
+					pubmessage = "1"
+					client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
+					break
+				else:
+					print("not certified!")
+					pubtopic = "{}/command/action".format(machine.id)
+					pubmessage = "2"
+					client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
+					break
+		# testing
+
 		topic = "{}/state/carduid".format(machine.id)
 		if msg.topic == topic:
 			print(msg.topic+" "+str(msg.payload))
@@ -152,7 +196,6 @@ def on_message(client, userdata, msg):
 						new_card.machine = Machine.objects.get(id=machine.id)
 						new_card.save()
 						print("Unregistered card [{}] existed already." .format(new_card.card_uid))
-						
 					else:
 						new_card = Unregistered_card(machine=machine, card_uid=card_uid)
 						new_card.save()
@@ -161,6 +204,7 @@ def on_message(client, userdata, msg):
 					pubtopic = "{}/command/action".format(machine.id)
 					pubmessage = "3"
 					client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
+					break
 					
 				if cardExist:
 					# check if certified or not
@@ -177,11 +221,13 @@ def on_message(client, userdata, msg):
 						pubmessage = "1"
 						client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
 						print(machineData[machine.id])
+						break
 					else:
 						print("not certified!")
 						pubtopic = "{}/command/action".format(machine.id)
 						pubmessage = "2"
 						client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
+						break
 
 		topic = "{}/state/stop".format(machine.id)
 		if msg.topic == topic:
@@ -256,6 +302,7 @@ def on_message(client, userdata, msg):
 					'end_time'	: 0,
 					'connect_id': machineData[machine.id]['connect_id'],
 				}
+				break
 
 		topic = "{}/state/usage".format(machine.id)
 		if msg.topic == topic and machineData[machine.id]['ssr'] == 1:
@@ -263,6 +310,7 @@ def on_message(client, userdata, msg):
 			machineData[machine.id]['usage'] = float(msg.payload)
 			machineData[machine.id]['end_time'] = timezone.now()
 			print(machineData[machine.id])
+			break
 
 		topic = "{}/state/connect".format(machine.id)
 		if msg.topic == topic:
@@ -275,6 +323,7 @@ def on_message(client, userdata, msg):
 				pubmessage = "1"
 				for x in range(0, 1):
 					client.publish(pubtopic, pubmessage, qos=mqtt_qos, retain=mqtt_retain)
+				break
 
 		topic = "{}/state/resetconnect".format(machine.id)
 		if msg.topic == topic:
@@ -289,6 +338,7 @@ def on_message(client, userdata, msg):
 				'end_time'	: 0,
 				'connect_id': 0,
 			}
+			break
 
 def on_disconnect(client, userdata, rc):
 	client.loop_stop(force=False)
